@@ -1,6 +1,6 @@
 {
-  "name": "西柚日记",
-  "short_name": "西柚日记",
+  "name": "2026mywish",
+  "short_name": "mywish",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#FFF5F2",
@@ -15,3 +15,4 @@
   ]
 
 }
+
