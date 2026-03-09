@@ -7,10 +7,11 @@
   "theme_color": "#FF8A71",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2903/2903601.png",
+      "src": "https://raw.githubusercontent.com/ln-yn062/mywish/refs/heads/main/mywish/icon",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ]
+
 }
