@@ -7,7 +7,7 @@
   "theme_color": "#FF8A71",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/ln-yn062/mywish/refs/heads/main/mywish/icon",
+      "src": "https://raw.githubusercontent.com/ln-yn062/mywish/refs/heads/main/mywish/icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -15,4 +15,5 @@
   ]
 
 }
+
 
