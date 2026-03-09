@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1077/1077035.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2026 WishFlow</title>
@@ -481,6 +486,13 @@
         }
 
         window.onload = init;
+        if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('PWA Registered!'))
+            .catch(err => console.log('PWA Registration Failed', err));
+    });
+}
     </script>
 </body>
 </html>
