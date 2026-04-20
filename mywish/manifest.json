@@ -1,0 +1,20 @@
+{
+  "name": "我的网页应用",
+  "short_name": "WebApp",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0061ff",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/ln-yn062/mywish/main/mywish/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/ln-yn062/mywish/main/mywish/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
