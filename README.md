@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3B82F6">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1077/1077035.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- PWA Primary Tags -->
+    <meta name="theme-color" content="#f8fafc">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="2026 WishFlow">
+    
+    <!-- Web Manifest (Inline Data URL for single file convenience) -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"2026 WishFlow","short_name":"WishFlow","start_url":".","display":"standalone","background_color":"#f8fafc","theme_color":"#3B82F6","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/9431/9431189.png","sizes":"512x512","type":"image/png"}]}'>
+
     <title>2026 WishFlow</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -30,18 +34,14 @@
             flex-direction: column;
         }
 
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
 
         .wish-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             -webkit-tap-highlight-color: transparent;
         }
 
-        .wish-card:active {
-            transform: scale(0.98);
-        }
+        .wish-card:active { transform: scale(0.98); }
 
         .details-panel {
             max-height: 0;
@@ -63,24 +63,26 @@
             to { transform: translateY(0); }
         }
 
-        .animate-slide-up {
-            animation: slideUp 0.3s ease-out;
-        }
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
 
-        .progress-ring {
-            transition: stroke-dashoffset 0.6s ease-out;
-        }
+        .progress-ring { transition: stroke-dashoffset 0.6s ease-out; }
 
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.5);
-            cursor: pointer;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-        }
+        .stat-card { background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%); }
     </style>
-</head>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0061ff">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ln-yn062/mywish/main/mywish/icon.png">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('SW Registered'))
+            .catch(err => console.log('SW Registration Failed', err));
+        });
+      }
+    </script>
+            </head>
 <body>
 
     <div class="app-container" id="app">
@@ -102,6 +104,15 @@
         <!-- Main Content -->
         <div id="main-content" class="flex-1 overflow-y-auto px-6 pb-24 space-y-10 scrollbar-hide"></div>
 
+        <!-- Install Prompt (PWA Only) -->
+        <div id="install-banner" class="hidden fixed bottom-24 left-6 right-6 bg-blue-600 text-white p-4 rounded-2xl shadow-2xl z-[100] flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                <span class="text-xs font-bold">安装到桌面以获得最佳体验</span>
+            </div>
+            <button onclick="triggerInstall()" class="bg-white text-blue-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase">安装</button>
+        </div>
+
         <!-- Footer Hint -->
         <div id="footer-hint-container" class="fixed bottom-6 left-0 w-full flex justify-center pointer-events-none z-20">
             <div id="footer-hint" class="bg-slate-900/90 text-white px-6 py-2 rounded-full shadow-xl text-[10px] font-bold tracking-widest uppercase">
@@ -109,56 +120,80 @@
             </div>
         </div>
 
-        <!-- Modal: Record Feedback -->
+        <!-- Modals (Record & Add) - Kept same as previous logic -->
         <div id="modal-record" class="hidden fixed inset-0 z-[80] flex items-end justify-center bg-black/40 backdrop-blur-sm">
             <div class="bg-white w-full p-8 pb-12 animate-slide-up shadow-2xl rounded-t-[32px]">
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h3 class="text-lg font-bold text-slate-800">记录此刻</h3>
-                        <p id="record-modal-subtitle" class="text-xs text-slate-400 font-medium mt-1">定格这份努力</p>
+                        <p class="text-xs text-slate-400 font-medium mt-1">定格这份努力</p>
                     </div>
                     <button onclick="closeRecordModal()" class="p-2 bg-slate-100 rounded-full text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
                 <div class="space-y-6">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2 px-1">打卡日期</label>
-                        <input type="date" id="input-record-date" class="w-full bg-slate-50 p-4 rounded-xl text-base font-semibold outline-none focus:ring-2 ring-emerald-100 border border-transparent">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2 px-1">感悟与反馈</label>
-                        <textarea id="input-record-feedback" placeholder="此刻的心情或进度反馈..." class="w-full bg-slate-50 p-4 rounded-xl text-base font-medium outline-none focus:ring-2 ring-emerald-100 border border-transparent h-24 resize-none"></textarea>
-                    </div>
-                    <button onclick="confirmRecord()" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold text-base shadow-lg active:scale-95 transition-all">确认保存</button>
+                    <input type="date" id="input-record-date" class="w-full bg-slate-50 p-4 rounded-xl text-base font-semibold outline-none border border-transparent">
+                    <textarea id="input-record-feedback" placeholder="此刻的心情或进度反馈..." class="w-full bg-slate-50 p-4 rounded-xl text-base font-medium outline-none h-24 resize-none"></textarea>
+                    <button onclick="confirmRecord()" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold text-base shadow-lg">确认保存</button>
                 </div>
             </div>
         </div>
 
-        <!-- Modal: Add New Item -->
         <div id="modal-add" class="hidden fixed inset-0 z-[60] flex items-end justify-center bg-black/40 backdrop-blur-sm">
             <div class="bg-white w-full p-8 pb-12 animate-slide-up shadow-2xl rounded-t-[32px]">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 id="add-modal-title" class="text-lg font-bold text-slate-800">添加愿望</h3>
+                    <h3 class="text-lg font-bold text-slate-800">添加愿望</h3>
                     <button onclick="closeAddModal()" class="p-2 bg-slate-100 rounded-full text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
                 <div class="space-y-6">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2 px-1">名称</label>
-                        <input id="input-item-title" placeholder="想实现什么？" class="w-full bg-slate-50 p-4 rounded-xl text-base font-semibold outline-none focus:ring-2 ring-blue-100 border border-transparent">
-                    </div>
+                    <input id="input-item-title" placeholder="想实现什么？" class="w-full bg-slate-50 p-4 rounded-xl text-base font-semibold outline-none border border-transparent">
                     <div id="multiple-options" class="hidden">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2 px-1">目标次数</label>
-                        <div class="flex items-center gap-4">
-                            <input type="number" id="input-item-total" value="10" class="w-20 bg-slate-50 p-3 rounded-xl text-center text-lg font-black text-blue-600 outline-none">
-                            <span class="text-slate-400 text-sm font-bold">次努力</span>
-                        </div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block">目标次数</label>
+                        <input type="number" id="input-item-total" value="10" class="w-20 bg-slate-50 p-3 rounded-xl text-center text-lg font-black text-blue-600">
                     </div>
-                    <button onclick="confirmAddItem()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-base shadow-lg active:scale-95 transition-all">确认添加</button>
+                    <button onclick="confirmAddItem()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-base">确认添加</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // --- PWA Registration Logic ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'wishflow-v1';
+                    self.addEventListener('install', (e) => {
+                        e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['/'])));
+                    });
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
+                    });
+                `;
+                const blob = new Blob([swCode], { type: 'text/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).catch(err => console.log('SW failed', err));
+            });
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-banner').classList.remove('hidden');
+        });
+
+        async function triggerInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('install-banner').classList.add('hidden');
+                }
+                deferredPrompt = null;
+            }
+        }
+
+        // --- Core App Logic ---
         let mode = 'display';
         let expandedItems = new Set();
         let categories = [
@@ -166,7 +201,7 @@
                 id: 1,
                 name: "自我提升",
                 items: [
-                    { id: 101, title: "读完 5 本艺术史", type: "multiple", total: 5, current: 2, completed: false, history: [{ date: '2026-03-01', feedback: '读完了第一章' }, { date: '2026-03-05', feedback: '对古典艺术有了新认识' }] },
+                    { id: 101, title: "读完 5 本艺术史", type: "multiple", total: 5, current: 2, completed: false, history: [{ date: '2026-03-01', feedback: '读完了第一章' }] },
                     { id: 102, title: "学会萨尔萨舞", type: "once", completed: false, history: [] }
                 ]
             },
@@ -174,11 +209,11 @@
                 id: 2,
                 name: "健康生活",
                 items: [
-                    { id: 201, title: "早睡早起 30 天", type: "multiple", total: 30, current: 12, completed: false, history: [] },
-                    { id: 202, title: "完成一次马拉松", type: "once", completed: true, history: [{date: '2026-01-20', feedback: '人生首马！'}] }
+                    { id: 201, title: "早睡早起 30 天", type: "multiple", total: 30, current: 12, completed: false, history: [] }
                 ]
             }
         ];
+
         let currentRecordContext = null;
         let currentAddContext = null;
 
@@ -189,33 +224,23 @@
 
         function setMode(newMode) {
             mode = newMode;
-            document.getElementById('btn-display').className = mode === 'display' 
-                ? 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-blue-600' 
-                : 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500';
-            
-            document.getElementById('btn-edit').className = mode === 'edit' 
-                ? 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-blue-600' 
-                : 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500';
-            
-            document.getElementById('footer-hint').textContent = mode === 'edit' ? 'Editing Mode' : 'Dreaming 2026';
+            document.getElementById('btn-display').className = mode === 'display' ? 'px-4 py-1.5 rounded-lg text-xs font-bold bg-white shadow-sm text-blue-600' : 'px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500';
+            document.getElementById('btn-edit').className = mode === 'edit' ? 'px-4 py-1.5 rounded-lg text-xs font-bold bg-white shadow-sm text-blue-600' : 'px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500';
             render();
         }
 
         function getStartOfWeek() {
             const now = new Date();
             const day = now.getDay();
-            const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
             const start = new Date(now.setDate(diff));
-            start.setHours(0, 0, 0, 0);
+            start.setHours(0,0,0,0);
             return start;
         }
 
         function calculateStats() {
-            let totalTargets = 0;
-            let currentProgress = 0;
-            let weeklyChecks = 0;
+            let totalTargets = 0, currentProgress = 0, weeklyChecks = 0;
             const weekStart = getStartOfWeek();
-
             categories.forEach(cat => {
                 cat.items.forEach(item => {
                     if (item.type === 'once') {
@@ -226,30 +251,22 @@
                         currentProgress += item.current;
                     }
                     if (item.history) {
-                        item.history.forEach(record => {
-                            if (new Date(record.date) >= weekStart) weeklyChecks++;
-                        });
+                        item.history.forEach(r => { if (new Date(r.date) >= weekStart) weeklyChecks++; });
                     }
                 });
             });
-
             return {
                 percentage: totalTargets > 0 ? Math.round((currentProgress / totalTargets) * 100) : 0,
-                current: currentProgress,
-                total: totalTargets,
-                weekly: weeklyChecks
+                current: currentProgress, total: totalTargets, weekly: weeklyChecks
             };
         }
 
         function renderStats() {
             const statsContainer = document.getElementById('stats-dashboard');
-            if (mode === 'edit') {
-                statsContainer.innerHTML = '';
-                return;
-            }
+            if (mode === 'edit') { statsContainer.innerHTML = ''; return; }
             const stats = calculateStats();
             const offset = 126 * (1 - stats.percentage / 100);
-            let weeklyColorClass = stats.weekly > 10 ? "text-amber-500" : (stats.weekly > 5 ? "text-blue-600" : "text-slate-900");
+            let weeklyColor = stats.weekly > 10 ? "text-amber-500" : (stats.weekly > 5 ? "text-blue-600" : "text-slate-900");
 
             statsContainer.innerHTML = `
                 <div class="stat-card p-5 rounded-[24px] border border-white shadow-sm flex items-center justify-between">
@@ -263,14 +280,14 @@
                         </div>
                         <div>
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">总体完成率</p>
-                            <p class="text-sm font-black text-slate-800">${stats.current} <span class="text-slate-300">/</span> ${stats.total}</p>
+                            <p class="text-sm font-black text-slate-800">${stats.current} / ${stats.total}</p>
                         </div>
                     </div>
                     <div class="h-10 w-px bg-slate-200 mx-2"></div>
                     <div class="text-right">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">本周打卡</p>
                         <div class="flex items-baseline justify-end gap-1">
-                            <span class="text-2xl font-black ${weeklyColorClass}">${stats.weekly}</span>
+                            <span class="text-2xl font-black ${weeklyColor}">${stats.weekly}</span>
                             <span class="text-[10px] font-bold text-slate-300">次</span>
                         </div>
                     </div>
@@ -285,20 +302,12 @@
 
             categories.forEach(cat => {
                 const section = document.createElement('section');
-                
-                // Calculate Category Progress
-                let catTotal = 0;
-                let catCurrent = 0;
+                let catTotal = 0, catCurrent = 0;
                 cat.items.forEach(i => {
-                    if(i.type === 'once') {
-                        catTotal += 1;
-                        if(i.completed) catCurrent += 1;
-                    } else {
-                        catTotal += i.total;
-                        catCurrent += i.current;
-                    }
+                    if(i.type === 'once') { catTotal += 1; if(i.completed) catCurrent += 1; }
+                    else { catTotal += i.total; catCurrent += i.current; }
                 });
-                
+
                 const header = document.createElement('div');
                 header.className = 'flex justify-between items-center px-2 mb-4';
                 if (mode === 'edit') {
@@ -306,7 +315,7 @@
                         <div class="flex items-center gap-2 flex-1">
                             <div class="w-1 h-4 bg-blue-500"></div>
                             <input onchange="updateCatName(${cat.id}, this.value)" class="bg-transparent border-b border-slate-200 text-base font-bold text-slate-800 outline-none w-full" value="${cat.name}">
-                            <div class="text-xs font-bold text-slate-300 px-2 whitespace-nowrap">${catCurrent}/${catTotal}</div>
+                            <div class="text-xs font-bold text-slate-300 px-2">${catCurrent}/${catTotal}</div>
                             <button onclick="deleteCat(${cat.id})" class="text-slate-300 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     `;
@@ -324,9 +333,9 @@
                 list.className = 'space-y-3';
                 cat.items.forEach(item => {
                     const isExpanded = expandedItems.has(item.id);
-                    const bgColorClass = item.completed ? 'bg-emerald-50/50 border-emerald-100' : 'bg-blue-50/50 border-blue-100';
+                    const bgColor = item.completed ? 'bg-emerald-50/50 border-emerald-100' : 'bg-blue-50/50 border-blue-100';
                     const card = document.createElement('div');
-                    card.className = `wish-card ${bgColorClass} p-4 border rounded-[20px] flex flex-col shadow-sm`;
+                    card.className = `wish-card ${bgColor} p-4 border rounded-[20px] flex flex-col shadow-sm`;
                     
                     const mainRow = document.createElement('div');
                     mainRow.className = 'flex items-center gap-4 w-full cursor-pointer';
@@ -334,33 +343,20 @@
 
                     let iconHtml = '';
                     if (item.type === 'once') {
-                        iconHtml = item.completed 
-                            ? '<i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-500"></i>' 
-                            : '<i data-lucide="circle" class="w-6 h-6 text-blue-300"></i>';
+                        iconHtml = item.completed ? '<i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-500"></i>' : '<i data-lucide="circle" class="w-6 h-6 text-blue-300"></i>';
                     } else {
-                        const offset = 113 * (1 - item.current / item.total);
-                        const ringColor = item.completed ? '#10B981' : '#3B82F6';
+                        const ringOffset = 113 * (1 - item.current / item.total);
                         iconHtml = `<div class="relative w-10 h-10 flex items-center justify-center shrink-0">
-                            <svg class="absolute w-full h-full rotate-[-90deg]">
-                                <circle cx="20" cy="20" r="18" fill="transparent" stroke="#E2E8F0" stroke-width="3"/>
-                                <circle cx="20" cy="20" r="18" fill="transparent" stroke="${ringColor}" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="${offset}" stroke-linecap="round" class="progress-ring"/>
-                            </svg>
-                            <span class="text-[9px] font-black ${item.completed ? 'text-emerald-600' : 'text-blue-600'}">${item.current || 0}</span>
+                            <svg class="absolute w-full h-full rotate-[-90deg]"><circle cx="20" cy="20" r="18" fill="transparent" stroke="#E2E8F0" stroke-width="3"/><circle cx="20" cy="20" r="18" fill="transparent" stroke="${item.completed ? '#10B981' : '#3B82F6'}" stroke-width="3" stroke-dasharray="113" stroke-dashoffset="${ringOffset}" stroke-linecap="round" class="progress-ring"/></svg>
+                            <span class="text-[9px] font-black ${item.completed ? 'text-emerald-600' : 'text-blue-600'}">${item.current}</span>
                         </div>`;
                     }
 
                     mainRow.innerHTML = `
                         <div class="shrink-0">${iconHtml}</div>
                         <div class="flex-1 min-w-0">
-                            <p class="font-bold text-slate-800 truncate ${item.completed ? 'text-emerald-900' : ''}">${item.title}</p>
-                            ${item.type === 'multiple' ? `
-                                <div class="flex items-center gap-2 mt-1">
-                                    <div class="flex-1 h-1 bg-slate-200/50 rounded-full overflow-hidden">
-                                        <div class="h-full ${item.completed ? 'bg-emerald-400' : 'bg-blue-400'}" style="width: ${(item.current/item.total)*100}%"></div>
-                                    </div>
-                                    <!-- 去掉了这里的右侧进度文本统计 -->
-                                </div>
-                            ` : ''}
+                            <p class="font-bold text-slate-800 truncate">${item.title}</p>
+                            ${item.type === 'multiple' ? `<div class="flex items-center gap-2 mt-1"><div class="flex-1 h-1 bg-slate-200/50 rounded-full overflow-hidden"><div class="h-full ${item.completed ? 'bg-emerald-400' : 'bg-blue-400'}" style="width: ${(item.current/item.total)*100}%"></div></div></div>` : ''}
                         </div>
                         ${mode === 'edit' ? `<button onclick="event.stopPropagation(); deleteItem(${cat.id}, ${item.id})" class="text-slate-300 hover:text-red-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                         ${mode === 'display' && item.history?.length > 0 ? `<i data-lucide="chevron-down" class="w-4 h-4 text-blue-400 transition-transform ${isExpanded ? 'rotate-180' : ''}"></i>` : ''}
@@ -372,17 +368,14 @@
                         details.className = `details-panel ${isExpanded ? 'expanded' : ''}`;
                         let historyHtml = item.history.map((h, idx) => `
                             <div class="flex gap-3 mb-4 last:mb-0">
-                                <div class="flex flex-col items-center shrink-0">
-                                    <div class="w-1.5 h-1.5 rounded-full ${item.completed ? 'bg-emerald-400' : 'bg-blue-400'} mt-1.5"></div>
-                                    ${idx !== item.history.length - 1 ? `<div class="w-px flex-1 bg-slate-200/50 my-1"></div>` : ''}
-                                </div>
+                                <div class="flex flex-col items-center shrink-0"><div class="w-1.5 h-1.5 rounded-full ${item.completed ? 'bg-emerald-400' : 'bg-blue-400'} mt-1.5"></div>${idx !== item.history.length - 1 ? `<div class="w-px flex-1 bg-slate-200/50 my-1"></div>` : ''}</div>
                                 <div class="flex-1">
                                     <p class="text-[9px] font-black text-slate-400 tracking-tighter mb-0.5">${h.date}</p>
                                     <p class="text-xs text-slate-600 font-medium">${h.feedback}</p>
                                 </div>
                             </div>
                         `).reverse().join('');
-                        details.innerHTML = `<div class="px-1 py-2"><h4 class="text-[9px] font-bold text-slate-300 uppercase tracking-widest mb-3">记录历程</h4>${historyHtml}</div>`;
+                        details.innerHTML = `<div class="px-1 py-2"><h4 class="text-[9px] font-bold text-slate-300 uppercase mb-3">记录历程</h4>${historyHtml}</div>`;
                         card.appendChild(details);
                     }
                     list.appendChild(card);
@@ -391,10 +384,7 @@
                 if (mode === 'edit') {
                     const addBox = document.createElement('div');
                     addBox.className = 'flex gap-2 pt-2';
-                    addBox.innerHTML = `
-                        <button onclick="openAddModal(${cat.id}, 'once')" class="flex-1 py-3 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-400 text-xs font-bold"><i data-lucide="plus" class="w-4 h-4"></i> 单次</button>
-                        <button onclick="openAddModal(${cat.id}, 'multiple')" class="flex-1 py-3 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-400 text-xs font-bold"><i data-lucide="plus" class="w-4 h-4"></i> 打卡</button>
-                    `;
+                    addBox.innerHTML = `<button onclick="openAddModal(${cat.id}, 'once')" class="flex-1 py-3 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-400 text-xs font-bold"><i data-lucide="plus" class="w-4 h-4"></i> 单次</button><button onclick="openAddModal(${cat.id}, 'multiple')" class="flex-1 py-3 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-400 text-xs font-bold"><i data-lucide="plus" class="w-4 h-4"></i> 打卡</button>`;
                     list.appendChild(addBox);
                 }
                 section.appendChild(list);
@@ -402,11 +392,11 @@
             });
 
             if (mode === 'edit') {
-                const addCat = document.createElement('button');
-                addCat.className = 'w-full py-4 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all mb-10';
-                addCat.innerHTML = `<i data-lucide="layout-grid" class="w-4 h-4"></i> 添加新分类`;
-                addCat.onclick = () => { categories.push({ id: Date.now(), name: "新分类", items: [] }); render(); };
-                container.appendChild(addCat);
+                const addCatBtn = document.createElement('button');
+                addCatBtn.className = 'w-full py-4 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all mb-10';
+                addCatBtn.innerHTML = `<i data-lucide="layout-grid" class="w-4 h-4"></i> 添加新分类`;
+                addCatBtn.onclick = () => { categories.push({ id: Date.now(), name: "新分类", items: [] }); render(); };
+                container.appendChild(addCatBtn);
             }
             lucide.createIcons();
         }
@@ -415,8 +405,7 @@
             if (mode === 'edit') return;
             const item = categories.find(c => c.id === catId).items.find(i => i.id === itemId);
             if (item.completed) {
-                if (expandedItems.has(itemId)) expandedItems.delete(itemId);
-                else expandedItems.add(itemId);
+                if (expandedItems.has(itemId)) expandedItems.delete(itemId); else expandedItems.add(itemId);
                 render();
             } else {
                 openRecordModal(catId, itemId);
@@ -425,15 +414,12 @@
 
         function openRecordModal(catId, itemId) {
             currentRecordContext = { catId, itemId };
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('input-record-date').value = today;
+            document.getElementById('input-record-date').value = new Date().toISOString().split('T')[0];
             document.getElementById('modal-record').classList.remove('hidden');
-            document.getElementById('input-record-feedback').focus();
         }
 
         function closeRecordModal() {
             document.getElementById('modal-record').classList.add('hidden');
-            document.getElementById('input-record-feedback').value = '';
             currentRecordContext = null;
         }
 
@@ -443,12 +429,8 @@
             const item = categories.find(c => c.id === currentRecordContext.catId).items.find(i => i.id === currentRecordContext.itemId);
             if (!item.history) item.history = [];
             item.history.push({ date, feedback });
-            if (item.type === 'once') {
-                item.completed = true;
-            } else {
-                item.current++;
-                if (item.current >= item.total) item.completed = true;
-            }
+            if (item.type === 'once') item.completed = true;
+            else { item.current++; if (item.current >= item.total) item.completed = true; }
             expandedItems.add(item.id);
             closeRecordModal();
             render();
@@ -473,26 +455,14 @@
             if (!title) return;
             const cat = categories.find(c => c.id === currentAddContext.catId);
             cat.items.push({
-                id: Date.now(),
-                title: title,
-                type: currentAddContext.type,
-                completed: false,
-                current: 0,
-                total: parseInt(document.getElementById('input-item-total').value) || 10,
-                history: []
+                id: Date.now(), title, type: currentAddContext.type, completed: false, current: 0,
+                total: parseInt(document.getElementById('input-item-total').value) || 10, history: []
             });
             closeAddModal();
             render();
         }
 
         window.onload = init;
-        if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('PWA Registered!'))
-            .catch(err => console.log('PWA Registration Failed', err));
-    });
-}
     </script>
 </body>
 </html>
